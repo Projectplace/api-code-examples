@@ -9,6 +9,10 @@ The code below demonstrates how to do a GET, POST and DELETE request using the
 
 You will have to fill in the application and access token information based on your own
 information.
+
+More instructions printed as you run the script.
+
+For more information on OAuth1 see: https://service.projectplace.com/apidocs/#articles/pageOAuth1.html
 """
 
 import requests
@@ -93,19 +97,6 @@ def print_account_info():
     Lets pretty print some basic information about the enterprise account.
     """
     _pretty_print_json(get_account_info())
-
-
-def print_create_project():
-    """
-    Creates an empty project in the enterprise account, prints its basic information to stdout,
-    then deletes the project.
-    """
-    _pretty_print_json(
-        requests.post(
-            _uri('/1/account/projects'),
-            data={}
-        )
-    )
 
 
 if __name__ == '__main__':
