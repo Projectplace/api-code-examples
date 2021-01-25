@@ -7,7 +7,7 @@ You also need to have the `requests` and `requests_oauthlib` libraries installed
 
 Invoke the script as such:
 
-    $ python python.py CLIENT_ID CLIENT_SECRET REDIRECT_URI
+    $ python python.py CLIENT_ID APPLICATION_SECRET REDIRECT_URI
 
 For example like this
 
@@ -20,7 +20,7 @@ copy that attribute to the terminal as prompted.
 
 Now you have an access token, and the script demos how you can call the profile API.
 
-You can test how to refrech an access token by supplying the optional parameters `--force_refresh` and you can 
+You can test how to refrech an access token by supplying the optional parameters `--force_refresh` and you can
 go through the authentication flow again by supplying `--reauthenticate`
 """
 
