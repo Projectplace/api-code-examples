@@ -11,7 +11,7 @@ In the console you will then see a link, open this link in your web browser, thi
 You will then be redirected to the redirect URI, in the URI there will be a code attribute.
 Copy that attribute to the terminal as prompted.
 The script will test and see if the Token is valid by calling the profile API.
-Now you should have a file called "access_token.json" with your access Token inside.
+Now you should have a file called ".access_token.json" with your access Token inside.
 
 NOTE:
 This code needs to run on Node JS version 18 or higher that supports the Fetch API.
@@ -52,17 +52,18 @@ async function refresh_Token(accessTokenFileContents) {
             refresh_question = prompt("Token has not expired, do you wish to renew it either way? y/n: ");
             refresh_question = refresh_question.toLowerCase();
             if (refresh_question == "n") { return false}
-            console.log("Before Refresh: ", accessToken);
+            console.log("Before Refresh:", accessToken);
             
             try {
                 accessToken = await accessToken.refresh();    
             } catch (error) {
                 console.log(error);
             }
+            console.log("After refresh:", accessToken)
             checkAccessToken(accessToken);
         }
     } else {
-        console.log("Missing 'refresh_token' in access_token.json - creating a new Token");
+        console.log("Missing 'refresh_token' in .access_token.json - creating a new Token");
         get_Access_Token()
     }
 }
@@ -96,7 +97,7 @@ async function checkAccessToken(accessToken) {
     .then((data) => {
         console.log("Access token seems valid, saving to -> acess_token.json");
         console.log("Access token: ", accessToken.token.access_token);
-        FS.writeFileSync("access_token.json", JSON.stringify(accessToken));
+        FS.writeFileSync(".access_token.json", JSON.stringify(accessToken));
     })
     .catch((data) => {
         console.log(data);
@@ -107,7 +108,7 @@ async function checkAccessToken(accessToken) {
 
 async function run() {
     try {
-        let accessTokenFileContents = FS.readFileSync("access_token.json");
+        let accessTokenFileContents = FS.readFileSync(".access_token.json");
         await refresh_Token(accessTokenFileContents);
     } catch (error) {
         if (error.code === "ENOENT") {
