@@ -11,7 +11,7 @@ See the `requirements.txt` file for needed third-party libraries.
 
 You can installe them by running `pip install -r requirements.txt`
 
-## 2. Modify the script to with authentication attributes
+### 2. Modify the script to with authentication attributes
 
 The following section needs to be replaced with application key/secret and your OAuth1 key/secret
 
@@ -23,7 +23,7 @@ ACCESS_TOKEN_SECRET = 'REDACTED'
 API_ENDPOINT = 'https://api.projectplace.com'
 ```
 
-## 3. Run the script
+### 3. Run the script
 
 ```
 $ python3 list-document-archive.py
