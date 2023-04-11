@@ -11,9 +11,9 @@ See the `requirements.txt` file for needed third-party libraries.
 
 You can installe them by running `pip install -r requirements.txt`
 
-### 2. Modify the script to with authentication attributes
+### 2. Modify the script with your authorization attributes
 
-The following section needs to be replaced with application key/secret and your OAuth1 key/secret
+The following section needs to be replaced with application key/secret and your OAuth1 token key/secret.
 
 ```
 APPLICATION_KEY = 'REDACTED'
