@@ -1,4 +1,4 @@
-# List contents of document archive
+# List contents of document archive of a Workspace
 
 This script asks you for the ID of a workspace - and then saves JSON-formatted list of the contents
 of the document archive in that workspace.
@@ -9,7 +9,7 @@ The script requires an OAuth1 token to operate and it assumes that you have alre
 
 See the `requirements.txt` file for needed third-party libraries.
 
-You can installe them by running `pip install -r requirements.txt`
+You can install them by running `pip install -r requirements.txt`
 
 ### 2. Modify the script with your authorization attributes
 
@@ -29,7 +29,7 @@ API_ENDPOINT = 'https://api.projectplace.com'
 $ python3 list-document-archive.py
 ```
 
-1. First the script will fetch a list of workspaces which you token allows you to access - it will
+1. First the script will fetch a list of workspaces which your token allows you to access - it will
    then print these workspaces and their IDs.
 2. Then the script will ask you which workspace you wish list the document archive for. Enter the ID of the
    workspace you are interested in.
