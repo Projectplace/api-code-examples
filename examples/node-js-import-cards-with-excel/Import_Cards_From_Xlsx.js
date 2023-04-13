@@ -1,17 +1,3 @@
-/*
-This script uses the node "xlsx" libraray to read a .xlsx file and then read the content to
-figure out the user attributes in the first row/header.
-This means that you do not have to arange the order of the attributes in the header to make it work.
-The script checks to see that you do not have too few attributes in the header nor too many.
-After that the script creates a json object for each Card and sends it to the API endpoint: projects/<Workspace/Project ID>/cards/create-new
-
-Headers that will be used: "Due date" "Description" "Assignee" "Title" "Label" "Points" "Estimated time" "Blocked reason" "Column" "Checklist" "Co-assignees" "Activity" "Board id".
-If you have more headers that are not on the list above, then they will not be used, however you will not get any errors for having them.
-
-Information about the headers see the API documentation: https://service.projectplace.com/apidocs/#base/projects/1/projects/%3Cint:project_id%3E/cards/create-new
-
-*/
-
 const xlsx = require('node-xlsx');
 const request = require('request');
 const prompt = require('prompt-sync')();
