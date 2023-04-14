@@ -5,7 +5,7 @@ The script requires a Oauth2 token in order to make the API calls to create the 
 it will assume that you have already created one.
 
 #### 1. Install requirements
-See the `requirements.txt` file for the needed third-party libraries.
+See the `package.json` file for the needed third-party libraries.
 
 #### 2. Run the script
 ```
