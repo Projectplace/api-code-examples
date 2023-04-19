@@ -1,0 +1,16 @@
+{
+  "name": "node-oauth2",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "version": "1.0.0",
+  "description": "OAuth2 Node JS example",
+  "main": "node.js",
+  "author": "Planview ProjectPlace",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^3.3.1",
+    "prompt-sync": "^4.2.0",
+    "simple-oauth2": "^5.0.0"
+  }
+}
