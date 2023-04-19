@@ -188,7 +188,7 @@ def _download_export(project_id, download_name, download_uri, path=None):
     with requests.get(download_uri, auth=oauth1, stream=True) as r:
         r.raise_for_status()
         with open(file_path, 'wb') as fp:
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in r.iter_content(chunk_size=2097152):  # 2 MB chunks should be fine
                 fp.write(chunk)
 
 
