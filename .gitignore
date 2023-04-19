@@ -1,4 +1,5 @@
 /venv/
 .idea/
+.DS_Store
 .access_token.json
 node_modules/
