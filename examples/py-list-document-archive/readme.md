@@ -1,3 +1,6 @@
+**Disclaimer**: Planview provides these examples for instructional purposes. While you are welcome to use this
+code in any way you see fit - Planview does not accept any liability or responsibility for you choosing to do so.
+
 # List contents of document archive of a Workspace
 
 This script asks you for the ID of a workspace - and then saves JSON-formatted list of the contents

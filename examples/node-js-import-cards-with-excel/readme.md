@@ -1,3 +1,6 @@
+**Disclaimer**: Planview provides these examples for instructional purposes. While you are welcome to use this
+code in any way you see fit - Planview does not accept any liability or responsibility for you choosing to do so.
+
 # Upload Cards from Xlsx file
 
 This NodeJS script reads the provided Xlsx file and creates Cards to the correct Board/Activity.

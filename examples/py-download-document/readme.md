@@ -1,3 +1,6 @@
+**Disclaimer**: Planview provides these examples for instructional purposes. While you are welcome to use this
+code in any way you see fit - Planview does not accept any liability or responsibility for you choosing to do so.
+
 # Download a document from ProjectPlace
 
 This script showcases how to download a document from ProjectPlace.
