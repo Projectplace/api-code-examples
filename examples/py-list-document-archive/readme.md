@@ -29,7 +29,7 @@ API_ENDPOINT = 'https://api.projectplace.com'
 ### 3. Run the script
 
 ```
-$ python3 list-document-archive.py
+$ python3 list_document_archive.py
 ```
 
 1. First the script will fetch a list of workspaces which your token allows you to access - it will

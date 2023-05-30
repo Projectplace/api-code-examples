@@ -40,7 +40,7 @@ API_ENDPOINT = 'https://api.projectplace.com'
 ### 3. Run the script
 
 ```
-$ python3 download-document.py -d DOCUMENT_ID
+$ python3 download_document.py -d DOCUMENT_ID
 ```
 
 This will immediately download the document (if it is a valid document that you have access to) to the working
