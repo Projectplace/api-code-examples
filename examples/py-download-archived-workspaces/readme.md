@@ -42,7 +42,7 @@ API_ENDPOINT = 'https://api.projectplace.com'
 ### 3. Run the script
 
 ```
-$ python3 download-workspaces.py
+$ python3 download_workspaces.py
 ```
 
 This will loop through all workspaces in the account, trigger the export job, and wait for it to complete 
@@ -52,7 +52,7 @@ The zip files will by default be downloaded to the working directory - but you c
 as such:
 
 ```
-$ python3 download-workspaces.py -p /Users/MyUser/WorkspaceDownloads
+$ python3 download_workspaces.py -p /Users/MyUser/WorkspaceDownloads
 ```
 
 On subsequent runs the script will ignore any workspaces that you have already downloaded.
@@ -60,7 +60,7 @@ On subsequent runs the script will ignore any workspaces that you have already d
 In order to delete archived workspaces after having downloaded - supply the `-d` argument. As such:
 
 ```
-$ python3 download-worksapces -p /Users/MyUser/WorkspaceDownloads -d
+$ python3 download_worksapces -p /Users/MyUser/WorkspaceDownloads -d
 ```
 
 This will delete archived workspaces from ProjectPlace after having downloaded them.  As a safety measure - 
