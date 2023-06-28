@@ -18,13 +18,14 @@ And wish to change the naming scheme to
 __john.doe@organisation.org__
 
 Then it is possible to add this new email to the already existing user account as new primary email-address, so that
-logins and authorisations are not disrupted. The already existing email will become a secondary email-address.
+logins and authorisations are not disrupted. The already existing email will become a secondary email address for the
+user.
 
 The requirements however is that the domain `organisation.org` is enforced on your enterprise account. And
 if changing domains - the new domain must also be enforced by your enterprise account. Contact support in order
 to add domains to your account.
 
-Please not that it is only possible to change the primary email of users whose
+Please note that it is only possible to change the primary email of users whose
 
 * Primary email is enforced by your account (the domain needs to be enforced by your account)
 * Are not the owner of the account (only the account owner themselves can change their primary email)

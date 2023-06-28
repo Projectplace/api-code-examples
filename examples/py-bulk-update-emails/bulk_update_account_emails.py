@@ -9,7 +9,7 @@ APPLICATION_KEY = 'REDACTED'
 APPLICATION_SECRET = 'REDACTED'
 ACCESS_TOKEN_KEY = 'REDACTED'
 ACCESS_TOKEN_SECRET = 'REDACTED'
-API_ENDPOINT = 'https:/api.projectplace.com'
+API_ENDPOINT = 'https://api.projectplace.com'
 
 
 oauth1 = requests_oauthlib.OAuth1(
