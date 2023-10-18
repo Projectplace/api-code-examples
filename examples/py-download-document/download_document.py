@@ -96,7 +96,7 @@ def _get_document_container_contents(document_container_id):
 
 
 @argh.arg('-d', '--document-id', type=int, default=None)
-def main(document_id=None):
+def main(*, document_id=None):
 
     if document_id is None:
         # Step 1 - which workspace should we list documents for?

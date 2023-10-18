@@ -69,7 +69,7 @@ def _verify_container(container_id):
 
 @argh.arg('file_path')
 @argh.arg('-f', '--folder-id', type=int, default=None)
-def upload_document(file_path, folder_id=None):
+def upload_document(file_path, *, folder_id=None):
     if not os.path.isfile(file_path):
         print(file_path, 'doesn\'t seem to be a valid file')
         exit(1)
@@ -84,8 +84,6 @@ def upload_document(file_path, folder_id=None):
         print('Document isn\'t in a versioned container - so a new document has been created:', f'https://compose.rnd.projectplace.com/pp/pp.cgi/r{document_id}')
     else:
         print('New version', version_number, 'of document has been uploaded:', f'https://compose.rnd.projectplace.com/pp/pp.cgi/r{document_id}')
-
-
 
 
 if __name__ == '__main__':
