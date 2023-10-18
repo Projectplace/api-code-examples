@@ -225,7 +225,7 @@ def _delete_archived_projects(archived_projects, path=None):
     '-p', '--path', default=None, type=str,
     help='Path to directory where download should end up - if unspecified current directory will be used'
 )
-def download_archived_projects(purge_after_download=False, path=None):
+def download_archived_projects(*, purge_after_download=False, path=None):
     """
     This is the entry point of the script.
     """
