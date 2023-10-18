@@ -98,7 +98,7 @@ def _report_subscription_status(board_id):
 @argh.arg('-w', '--webhook_url', default='', help='This should be the webhook which should get'
                                                   'invoked when the subscribed event happens')
 @argh.arg('-u', '--unsubscribe', default=False, help='Delete the subscription if it exists')
-def board_subscription(board_id, webhook_url='', unsubscribe=False):
+def board_subscription(board_id, *, webhook_url='', unsubscribe=False):
     project_id = _board_is_accessible(board_id)
     if not project_id:
         print(f'Board does not exist or is not accessible using {oauth1.client}')
