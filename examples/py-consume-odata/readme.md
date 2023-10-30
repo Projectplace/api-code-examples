@@ -28,7 +28,8 @@ You can install them by running `pip install -r requirements.txt`
 
 ### 2. Modify the script with your authorization attributes
 
-The following section needs to be replaced with application key/secret and your OAuth1 token key/secret.
+The following section needs to be replaced with application key/secret for your account robot. You CAN call 
+the endpoints as a normal user as well but will have to obtain an access token from them as individuals.
 
 ```
 CLIENT_ID = 'REDACTED'
