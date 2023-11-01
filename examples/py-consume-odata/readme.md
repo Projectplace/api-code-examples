@@ -15,10 +15,54 @@ Each of these endpoints contains different entity-sets which can be consumed via
 just as with calls to the `https://api.projectplace.com` URL. The only thing that is required is an OAuth1 or
 OAuth2 access token with relevant access rights.
 
+
+**Workspace related data**
+Call https://odata3.projectplace.com/pm/ENTITY_SET
+
+Where `ENTITY_SET` is one of the following:
+
+1. `Cards`
+2. `Activities`
+3. `TimeReports`
+4. `CardCustomFields`
+5. `ActivityCustomFields`
+6. `Members`
+7. `Workspaces`
+8. `WorkspaceMemberships`
+9. `WorkspaceMemberRoles`
+10. `CardsCoAssignees`
+11. `CardTags`
+12. `IssueTags`
+13. `PlanSnapshots`
+14. `PlanSnapshotValues`
+15. `Issues`
+
+**Account related data**
+Call https://odata3.projectplace.com/am/ENTITY_SET
+
+Where `ENTITY_SET` is one of the following:
+
+1. `AccountPeople`
+2. `AccountWorkspaces`
+3. `AccountWorkspaceMembers`
+4. `Requests`
+5. `WorkspaceCustomField`
+6. `RequestCustomFormFields`
+
+**Portfolios related data**
+Call https://odata3.projectplace.com/portfolios/ENTITY_SET
+
+Where `ENTITY_SET` is one of the following
+
+1. `Portfolios`
+2. `PortfolioWorkspaces`
+3. `KPIStatusReports`
+
 In this script we have opted to demonstrate calling the OData endpoints using the OAuth2 client credentials flow.
 
 The client credentials flow for OAuth2 only works for robot accounts. For any other user you would have
 to acquire a valid OAuth1 or OAuth2 access token. Keep this in mind for your own implementation or integration.
+
 
 ### 1. Install requirements
 
