@@ -21,6 +21,7 @@ import json
 import os
 import sys
 import textwrap
+import urllib.parse
 
 APPLICATION_KEY = 'REDACTED'
 APPLICATION_SECRET = 'REDACTED'
@@ -38,7 +39,7 @@ oauth = requests_oauthlib.OAuth1(
 
 def _uri(path):
     """ Concatenates API_ENDPOINT and path """
-    return os.path.join(API_ENDPOINT, path.lstrip('/'))
+    return urllib.parse.urljoin(API_ENDPOINT, path.lstrip('/'))
 
 
 def _pretty_print_json(_obj):
