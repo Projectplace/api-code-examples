@@ -144,7 +144,6 @@ def _download_entities(odata_endpoint, entity_set, avoid_streaming=False):
 
 def consume_odata(*, avoid_streaming=False):
     """ Entry point function """
-    print(avoid_streaming)
     _ensure_access_token()
     odata_endpoint = _prompt_endpoint()
     entity_set = _show_available_entity_sets(odata_endpoint)
