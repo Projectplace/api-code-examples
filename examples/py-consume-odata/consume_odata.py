@@ -1,6 +1,7 @@
 import gzip
 import os
 import math
+import argh
 import requests
 import requests.auth
 from datetime import datetime
@@ -8,6 +9,7 @@ from datetime import datetime
 CLIENT_ID = 'REDACTED'
 CLIENT_SECRET = 'REDACTED'
 ODATA_BASE_URL = 'https://odata3.projectplace.com'
+ACTUAL_FETCH_URL = 'https://service.projectplace.com/api/odata'
 ACCESS_TOKEN_URL = 'https://api.projectplace.com/oauth2/access_token'
 ODATA_ENDPOINTS = {
     'pm': 'Workspace data',
@@ -101,42 +103,53 @@ def _convert_size(size_bytes):
     return "%s %s" % (s, size_name[i])
 
 
-def _download_entities(odata_endpoint, entity_set):
+def _download_entities(odata_endpoint, entity_set, avoid_streaming=False):
     """
     Progressively downloads all entities in a specific entity set (such as AccountWorkspaces) from a specific odata
     endpoint (such as "am").
 
     The contents are saved in a gzipped file.
     """
-    url = f'{ODATA_BASE_URL}/{odata_endpoint}/{entity_set}'
+    url = f'{ACTUAL_FETCH_URL}/{odata_endpoint}/{entity_set}'
     headers = {
         'Authorization': f'Bearer {access_token}'
     }
-    file_name = f'{odata_endpoint}_{entity_set}_{datetime.now().date().isoformat()}.json.gz'
+
     size_downloaded = 0
     chunk_size = 102400  # 100 kB per pop
-    print(f'Downloading {odata_endpoint}/{entity_set} please wait...          ', end='\r')
-    with requests.get(url, headers=headers, stream=True) as response:
-        response.raise_for_status()
+    if avoid_streaming:
+        print(f'Downloading {odata_endpoint}/{entity_set} please wait...')
+        file_name = f'{odata_endpoint}_{entity_set}_{datetime.now().date().isoformat()}.json'
+        with open(file_name.replace('.gz', ''), 'wb') as f:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            f.write(response.content)
+    else:
+        file_name = f'{odata_endpoint}_{entity_set}_{datetime.now().date().isoformat()}.json.gz'
+        print(f'Downloading {odata_endpoint}/{entity_set} please wait...          ', end='\r')
+
         with gzip.open(file_name, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                size_downloaded += len(chunk)
-                print(f'Downloading {odata_endpoint}/{entity_set} please wait... {_convert_size(size_downloaded)}'
-                      f'          ', end='\r', flush=True)
-                f.write(chunk)
+            with requests.get(url, headers=headers, stream=True) as response:
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    size_downloaded += len(chunk)
+                    print(f'Downloading {odata_endpoint}/{entity_set} please wait... {_convert_size(size_downloaded)}'
+                          f'          ', end='\r', flush=True)
+                    f.write(chunk)
 
     file_size = _convert_size(os.stat(file_name).st_size)
 
     print(f'Done! Downloaded {_convert_size(size_downloaded)} to {file_name} (Final file size: {file_size})')
 
 
-def consume_odata():
+def consume_odata(*, avoid_streaming=False):
     """ Entry point function """
+    print(avoid_streaming)
     _ensure_access_token()
     odata_endpoint = _prompt_endpoint()
     entity_set = _show_available_entity_sets(odata_endpoint)
-    _download_entities(odata_endpoint, entity_set)
+    _download_entities(odata_endpoint, entity_set, avoid_streaming=avoid_streaming)
 
 
 if __name__ == '__main__':
-    consume_odata()
+    argh.dispatch_command(consume_odata)
