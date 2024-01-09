@@ -10,7 +10,6 @@ from datetime import datetime
 CLIENT_ID = 'REDACTED'
 CLIENT_SECRET = 'REDACTED'
 ODATA_BASE_URL = 'https://odata3.projectplace.com'
-ACTUAL_FETCH_URL = 'https://service.projectplace.com/api/odata'
 ACCESS_TOKEN_URL = 'https://api.projectplace.com/oauth2/access_token'
 ODATA_ENDPOINTS = {
     'pm': 'Workspace data',
@@ -111,7 +110,7 @@ def _download_entities(odata_endpoint, entity_set, avoid_streaming=False):
 
     The contents are saved in a gzipped file.
     """
-    url = f'{ACTUAL_FETCH_URL}/{odata_endpoint}/{entity_set}'
+    url = f'{ODATA_BASE_URL}/{odata_endpoint}/{entity_set}'
     headers = {
         'Authorization': f'Bearer {access_token}'
     }
