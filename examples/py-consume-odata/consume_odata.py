@@ -1,4 +1,5 @@
 import gzip
+import json
 import os
 import math
 import argh
@@ -137,8 +138,17 @@ def _download_entities(odata_endpoint, entity_set, avoid_streaming=False):
                           f'          ', end='\r', flush=True)
                     f.write(chunk)
 
+    print('\n')
     file_size = _convert_size(os.stat(file_name).st_size)
 
+    if 'gz' in file_name:
+        with gzip.open(file_name, 'rb') as f:
+            _data = json.load(f)
+    else:
+        with open(file_name, 'rb') as f:
+            _data = json.load(f)
+
+    print(f'Valid JSON with', len(_data['value']), 'entries', flush=True)
     print(f'Done! Downloaded {_convert_size(size_downloaded)} to {file_name} (Final file size: {file_size})')
 
 
