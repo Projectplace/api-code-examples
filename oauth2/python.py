@@ -20,41 +20,35 @@ copy that attribute to the terminal as prompted.
 
 Now you have an access token, and the script demos how you can call the profile API.
 
-You can test how to refrech an access token by supplying the optional parameters `--force_refresh` and you can
-go through the authentication flow again by supplying `--reauthenticate`
+You can test how to refresh an access token by supplying the optional parameters `--refresh` and you can
+go through the authentication flow again by supplying `--reauth`
 """
-
+import pprint
 import webbrowser
 import requests
-from requests_oauthlib import OAuth2Session
-import sys
-import os
+import argh
 import json
+import os
+from requests_oauthlib import OAuth2Session
 
 authorization_base_url = 'https://api.projectplace.com/oauth2/authorize'
 token_url = 'https://api.projectplace.com/oauth2/access_token'
 api_endpoint = 'https://api.projectplace.com'
-client_id = None
-client_secret = None
-redirect_uri = None
-force_refresh_token = False
-reauthenticate = False
-token = None
 
 
-def get_authorized_session(session):
+def get_authorized_session(session, client_id, client_secret):
     authorization_url, state = session.authorization_url(authorization_base_url)
 
     print('Opening webrowser to', authorization_url)
     webbrowser.open(authorization_url, new=1)
     oauth_code = input('Enter Code: ')
-
-    access_token_response = requests.post(token_url, data={
+    payload = {
         'client_id': client_id,
         'client_secret': client_secret,
         'code': oauth_code,
         'grant_type': 'authorization_code'
-    })
+    }
+    access_token_response = requests.post(token_url, data=payload)
 
     if access_token_response.status_code == 200:
         token = access_token_response.json()
@@ -70,30 +64,35 @@ def get_authorized_session(session):
         print(access_token_response.text)
 
 
-if __name__ == '__main__':
+@argh.arg('--auth', help='Supply this flag in order to go through the entire flow from the start')
+@argh.arg('--refresh', help='Supply this flag in order to refresh an already existing access token')
+@argh.arg('redirect_uri', help='This is the redirect (callback) URL as defined in your application settings (this must match precisely)')
+@argh.arg('client_secret', help='This is the secret of your application')
+@argh.arg('client_id', help='This is the ID of your application')
+def do_authorization_flow(
+        client_id: str, client_secret: str, redirect_uri: str, refresh: bool = False,
+        auth: bool = False
+):
+    token = None
     if os.path.isfile('access_token.json'):
         with open('access_token.json', 'r') as stored_access_token:
             try:
                 token = json.loads(stored_access_token.read())
             except ValueError:
-                token = None
+                pass
 
-    client_id = sys.argv[1]
-    client_secret = sys.argv[2]
-    redirect_uri = sys.argv[3]
-    force_refresh_token = True if '--force_refresh' in sys.argv else False
-    reauthenticate = True if '--reauthenticate' in sys.argv else False
-
-    if token and not reauthenticate:
+    if token and not auth:
         projectplace = OAuth2Session(client_id, token=token)
     else:
-        projectplace = get_authorized_session(OAuth2Session(client_id, redirect_uri=redirect_uri))
+        projectplace = get_authorized_session(
+            OAuth2Session(client_id, redirect_uri=redirect_uri), client_id, client_secret
+        )
 
     print('Calling with token', projectplace.token)
     response = projectplace.get(api_endpoint + '/1/user/me/profile')
 
-    if response.status_code == 401 or force_refresh_token:
-        print('Unauthorized, access token may have expired - attempting to refresh token.')
+    if response.status_code == 401 or refresh:
+        print('Attempting to refresh token.')
 
         refresh_response = requests.post(token_url, {
             'client_id': client_id,
@@ -106,10 +105,13 @@ if __name__ == '__main__':
             token = refresh_response.json()
             with open('access_token.json', 'w') as stored_access_token:
                 stored_access_token.write(json.dumps(token))
-            projectplace = OAuth2Session(client_id=client_id, token=token)
-            print('%s: Refreshing token worked, new access token:', token)
+            print('Refreshing token worked, new access token:', token)
         else:
-            print('%s: Refreshing failed, response =', refresh_response.text)
+            print('Refreshing failed, response =', refresh_response.text)
 
     if response.status_code == 200:
         print('200 OK Successfully fetched profile belonging to', response.json()['sort_name'])
+
+
+if __name__ == '__main__':
+    argh.dispatch_command(do_authorization_flow)
