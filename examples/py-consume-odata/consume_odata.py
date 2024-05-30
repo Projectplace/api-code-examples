@@ -77,8 +77,12 @@ def _show_available_entity_sets(odata_endpoint):
     Shows which entity sets are available in the OData endpoint
     """
     response = requests.get(
-        f'{ODATA_BASE_URL}/{odata_endpoint}'  # No authentication is necessary for discovery
+        f'{ODATA_BASE_URL}/{odata_endpoint}',
+        headers={
+            'Authorization': f'Bearer {access_token}'
+        }
     )
+
     response.raise_for_status()
 
     print(f'\nThe following entity sets are available for {ODATA_ENDPOINTS[odata_endpoint]}:')
