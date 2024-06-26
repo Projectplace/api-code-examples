@@ -60,7 +60,7 @@ On subsequent runs the script will ignore any workspaces that you have already d
 In order to delete archived workspaces after having downloaded - supply the `-d` argument. As such:
 
 ```
-$ python3 download_worksapces -p /Users/MyUser/WorkspaceDownloads -d
+$ python3 download_workspaces -p /Users/MyUser/WorkspaceDownloads -d
 ```
 
 This will delete archived workspaces from ProjectPlace after having downloaded them.  As a safety measure - 
