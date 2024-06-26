@@ -97,7 +97,8 @@ def _download_archived_projects(archived_projects, path=None):
         if filename := _project_file_exists(archived_project.id, path=path):
             print(
                 f'{n}/{len(archived_projects)} Already downloaded "{archived_project.name}" '
-                f'({archived_project.space_used}). Delete {os.path.join(path, filename)} to re-download.',
+                f'({archived_project.space_used}). Delete {os.path.join(path or os.path.abspath(os.curdir), filename)} '
+                f'to re-download.',
             )
             continue
 
@@ -132,7 +133,7 @@ def _trigger_project_export(project_id: int):
               "include_issues_2": True, "include_issues_2_attachments": True},
         auth=oauth1
     )
-
+    response.raise_for_status()
     if response.status_code == 200:
         eid = response.json()
         assert isinstance(eid, int)
