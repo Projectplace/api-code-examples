@@ -1,6 +1,7 @@
 /venv/
 .idea/
 .DS_Store
+access_token.json
 .access_token.json
 node_modules/
 package-lock.json
