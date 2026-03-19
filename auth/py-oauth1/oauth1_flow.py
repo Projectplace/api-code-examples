@@ -1,4 +1,6 @@
 """
+OAuth1 Authentication Example
+
 Working example of how to use a "robot" account.
 
 A robot account is a hidden super user, which communicates over OAuth1 - as if that super
@@ -15,19 +17,20 @@ More instructions printed as you run the script.
 For more information on OAuth1 see: https://service.projectplace.com/apidocs/#articles/pageOAuth1.html
 """
 
-import requests
-import requests_oauthlib
-import json
-import os
 import sys
+import json
+import requests
 import textwrap
 import urllib.parse
+import requests_oauthlib
+
 
 APPLICATION_KEY = 'REDACTED'
 APPLICATION_SECRET = 'REDACTED'
 ACCESS_TOKEN_KEY = 'REDACTED'
 ACCESS_TOKEN_SECRET = 'REDACTED'
-API_ENDPOINT = 'https://api.projectplace.com'
+SUBDOMAIN = 'REDACTED'
+API_ENDPOINT = f'https://{SUBDOMAIN}.projectplace.com'
 
 oauth = requests_oauthlib.OAuth1(
     client_key=APPLICATION_KEY,
@@ -115,14 +118,14 @@ if __name__ == '__main__':
         print(textwrap.dedent(
             """
             Invoke the script such:
-                
+
                 `python python-robot.py account-info`
-           
+
             or
-                    
+
                 `python python-robot.py create-project PROJECT_NAME`
-                
+
             (where project name is the intended name of the project)
-               
+
             Since the script is for demo purposes - the created project is immediately deleted.
             You can comment out the delete invokation if you wish to keep it around."""))
