@@ -2,22 +2,39 @@ import csv
 import json
 import argh
 import requests
-import requests_oauthlib
+import requests.auth
 
 
-APPLICATION_KEY = 'REDACTED'
-APPLICATION_SECRET = 'REDACTED'
-ACCESS_TOKEN_KEY = 'REDACTED'
-ACCESS_TOKEN_SECRET = 'REDACTED'
+CLIENT_ID = 'REDACTED'
+CLIENT_SECRET = 'REDACTED'
 API_ENDPOINT = 'https://api.projectplace.com'
 
+access_token = None
 
-oauth1 = requests_oauthlib.OAuth1(
-    client_key=APPLICATION_KEY,
-    client_secret=APPLICATION_SECRET,
-    resource_owner_key=ACCESS_TOKEN_KEY,
-    resource_owner_secret=ACCESS_TOKEN_SECRET
-)
+
+def _ensure_access_token():
+    """
+    We ask for a new access token on every script run - in normal circumstances you can hold on to an access
+    token for longer than that.
+
+    This function uses the client credentials flow which only works for robot accounts since it is intended for
+    application-to-application communication. So the client_id and client_secret needs to belong to a robot and the
+    resulting access token will also belong to the robot.
+    """
+    global access_token
+    access_token_response = requests.post(
+        f'{API_ENDPOINT}/oauth2/access_token',
+        data={
+            'grant_type': 'client_credentials',
+        },
+        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+    )
+    access_token_response.raise_for_status()
+    access_token = access_token_response.json()['access_token']
+
+
+def _get_auth_header():
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 def get_email_changes(csv_file):
@@ -37,7 +54,7 @@ def get_valid_email_changes(existing_emails):
     Compare the list of existing emails to emails of actual account members. Return a mapping where
     only account members are represented.
     """
-    response = requests.get(f'{API_ENDPOINT}/1/account/people', auth=oauth1)
+    response = requests.get(f'{API_ENDPOINT}/1/account/people', headers=_get_auth_header())
 
     assert response.status_code == 200
 
@@ -62,7 +79,7 @@ def change_emails(emails_to_change):
         r = requests.post(
             f'{API_ENDPOINT}/1/account/people/{new["id"]}',
             json={'action': 'add_secondary_email', 'params': [new['email']]},
-            auth=oauth1
+            headers=_get_auth_header()
         )
         if r.status_code != 200:
             failures.append(existing)
@@ -77,6 +94,7 @@ def change_emails(emails_to_change):
 
 
 def bulk_update_emails(csv_file):
+    _ensure_access_token()
     email_changes = get_email_changes(csv_file)
 
     all_mapped_account_members = get_valid_email_changes(email_changes)

@@ -2,23 +2,39 @@ import json
 import os.path
 import argh
 import requests
-import requests_oauthlib
+import requests.auth
 
 
+CLIENT_ID = 'REDACTED'
+CLIENT_SECRET = 'REDACTED'
+API_ENDPOINT = 'https://api.projectplace.com'
 
-APPLICATION_KEY = '65a7b8a09cad1c8a514968d3ae0dcea4'
-APPLICATION_SECRET = 'baf74123d0897cc61652d7b458638ad12791160f'
-ACCESS_TOKEN_KEY = '04b12136a5093ac378304449171d83a4'
-ACCESS_TOKEN_SECRET = '448ed69b90659cd97c3a5b6e99a6651682b0ced7'
-API_ENDPOINT = 'https://api-compose.rnd.projectplace.com'
+access_token = None
 
 
-oauth1 = requests_oauthlib.OAuth1(
-    client_key=APPLICATION_KEY,
-    client_secret=APPLICATION_SECRET,
-    resource_owner_key=ACCESS_TOKEN_KEY,
-    resource_owner_secret=ACCESS_TOKEN_SECRET
-)
+def _ensure_access_token():
+    """
+    We ask for a new access token on every script run - in normal circumstances you can hold on to an access
+    token for longer than that.
+
+    This function uses the client credentials flow which only works for robot accounts since it is intended for
+    application-to-application communication. So the client_id and client_secret needs to belong to a robot and the
+    resulting access token will also belong to the robot.
+    """
+    global access_token
+    access_token_response = requests.post(
+        f'{API_ENDPOINT}/oauth2/access_token',
+        data={
+            'grant_type': 'client_credentials',
+        },
+        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+    )
+    access_token_response.raise_for_status()
+    access_token = access_token_response.json()['access_token']
+
+
+def _get_auth_header():
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 def _choose_workspace():
@@ -26,7 +42,7 @@ def _choose_workspace():
     Asks the user to pick a workspace - and returns the ID of the selected workspace's main document
      container - if it is valid
     """
-    available_workspaces = requests.get(f'{API_ENDPOINT}/1/user/me/projects?include_tools=true', auth=oauth1).json()
+    available_workspaces = requests.get(f'{API_ENDPOINT}/1/user/me/projects?include_tools=true', headers=_get_auth_header()).json()
     print('You have access to the following workspaces:')
     for workspace in available_workspaces:
         print(f'{workspace["name"]} ID: {workspace["id"]}')
@@ -47,14 +63,14 @@ def _do_the_upload(file_path, document_container_id):
     r = requests.post(
         f'{API_ENDPOINT}/2/documents/{document_container_id}/upload',
         files={file_name: open(file_path, 'rb')},
-        auth=oauth1
+        headers=_get_auth_header()
     )
 
     return r.json()['id'], r.json()['ver_nr']
 
 
 def _verify_container(container_id):
-    r = requests.get(f'{API_ENDPOINT}/2/documents/{container_id}', auth=oauth1)
+    r = requests.get(f'{API_ENDPOINT}/2/documents/{container_id}', headers=_get_auth_header())
     response_json = r.json()
 
     if 'container_id' not in response_json:
@@ -70,6 +86,7 @@ def _verify_container(container_id):
 @argh.arg('file_path')
 @argh.arg('-f', '--folder-id', type=int, default=None)
 def upload_document(file_path, *, folder_id=None):
+    _ensure_access_token()
     if not os.path.isfile(file_path):
         print(file_path, 'doesn\'t seem to be a valid file')
         exit(1)
@@ -81,9 +98,9 @@ def upload_document(file_path, *, folder_id=None):
     document_id, version_number = _do_the_upload(file_path, document_container_id)
 
     if not version_number:
-        print('Document isn\'t in a versioned container - so a new document has been created:', f'https://compose.rnd.projectplace.com/pp/pp.cgi/r{document_id}')
+        print('Document isn\'t in a versioned container - so a new document has been created:', f'https://www.projectplace.com/pp/pp.cgi/r{document_id}')
     else:
-        print('New version', version_number, 'of document has been uploaded:', f'https://compose.rnd.projectplace.com/pp/pp.cgi/r{document_id}')
+        print('New version', version_number, 'of document has been uploaded:', f'https://www.projectplace.com/pp/pp.cgi/r{document_id}')
 
 
 if __name__ == '__main__':

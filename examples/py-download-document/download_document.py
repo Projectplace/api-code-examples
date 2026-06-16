@@ -2,29 +2,46 @@ import os.path
 import urllib.parse
 import argh
 import requests
-import requests_oauthlib
+import requests.auth
 
 
-APPLICATION_KEY = 'REDACTED'
-APPLICATION_SECRET = 'REDACTED'
-ACCESS_TOKEN_KEY = 'REDACTED'
-ACCESS_TOKEN_SECRET = 'REDACTED'
+CLIENT_ID = 'REDACTED'
+CLIENT_SECRET = 'REDACTED'
 API_ENDPOINT = 'https://api.projectplace.com'
 
+access_token = None
 
-oauth1 = requests_oauthlib.OAuth1(
-    client_key=APPLICATION_KEY,
-    client_secret=APPLICATION_SECRET,
-    resource_owner_key=ACCESS_TOKEN_KEY,
-    resource_owner_secret=ACCESS_TOKEN_SECRET
-)
+
+def _ensure_access_token():
+    """
+    We ask for a new access token on every script run - in normal circumstances you can hold on to an access
+    token for longer than that.
+
+    This function uses the client credentials flow which only works for robot accounts since it is intended for
+    application-to-application communication. So the client_id and client_secret needs to belong to a robot and the
+    resulting access token will also belong to the robot.
+    """
+    global access_token
+    access_token_response = requests.post(
+        f'{API_ENDPOINT}/oauth2/access_token',
+        data={
+            'grant_type': 'client_credentials',
+        },
+        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+    )
+    access_token_response.raise_for_status()
+    access_token = access_token_response.json()['access_token']
+
+
+def _get_auth_header():
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 def _choose_workspace():
     """
     Asks the user to pick a workspace - and returns the ID of the selected workspace if it is valid
     """
-    available_workspaces = requests.get(f'{API_ENDPOINT}/1/user/me/projects', auth=oauth1).json()
+    available_workspaces = requests.get(f'{API_ENDPOINT}/1/user/me/projects', headers=_get_auth_header()).json()
 
     print('\nYou have access to the following workspaces:')
 
@@ -47,7 +64,7 @@ def _download_document(document):
     # not contain any forbidden characters - but is urlencoded so we unquote it.
     filename = urllib.parse.unquote(document['os_file_name'])
     print('Downloading...')
-    with requests.get(f'{API_ENDPOINT}/1/documents/{document["id"]}', auth=oauth1, stream=True) as r:
+    with requests.get(f'{API_ENDPOINT}/1/documents/{document["id"]}', headers=_get_auth_header(), stream=True) as r:
         r.raise_for_status()
         with open(filename, 'wb') as fp:
             for chunk in r.iter_content(chunk_size=8192):
@@ -61,7 +78,7 @@ def _get_document_container_contents(document_container_id):
     """
 
     # The actual contents of the document container is found in the "contents" attribute
-    contents = requests.get(f'{API_ENDPOINT}/2/documents/{document_container_id}', auth=oauth1).json()['contents']
+    contents = requests.get(f'{API_ENDPOINT}/2/documents/{document_container_id}', headers=_get_auth_header()).json()['contents']
 
     folders = []
     documents = []
@@ -97,6 +114,7 @@ def _get_document_container_contents(document_container_id):
 
 @argh.arg('-d', '--document-id', type=int, default=None)
 def main(*, document_id=None):
+    _ensure_access_token()
 
     if document_id is None:
         # Step 1 - which workspace should we list documents for?
@@ -105,7 +123,7 @@ def main(*, document_id=None):
         # Step 2 - Ask the user to designate which document to download
         _get_document_container_contents(workspace_id)
     else:
-        document = requests.get(f'{API_ENDPOINT}/2/documents/{document_id}', auth=oauth1).json()
+        document = requests.get(f'{API_ENDPOINT}/2/documents/{document_id}', headers=_get_auth_header()).json()
 
         _download_document(document)
 

@@ -2,20 +2,41 @@ const xlsx = require('node-xlsx');
 const request = require('request');
 const prompt = require('prompt-sync')();
 
-const access_Token = prompt("Please provide your API access token: ");
+const CLIENT_ID = 'REDACTED';
+const CLIENT_SECRET = 'REDACTED';
+const API_ENDPOINT = 'https://api.projectplace.com';
+
 const workspace_ID = prompt("Please provide the Workspace/Project ID where the Cards should appear in: ");
 const file_Path = prompt("Please provide the full path to the xlsx file: ");
 const work_Sheets = xlsx.parse(file_Path);
 
 var failed_ImportedCards = [];
+let access_Token = null;
 
-// Check how many Sheets there are in the xlsx file.
-if (work_Sheets.length > 1) {
-    console.warn("Found more than one sheet in the xlsx file.");
-    sheet_Name = prompt("Please provide the sheet name that the Cards are in: ");
-    handle_SheetInformation(get_SheetInformation(sheet_Name));
-} else {
-    handle_SheetInformation(work_Sheets[0]);
+function _ensureAccessToken() {
+    return new Promise((resolve, reject) => {
+        request.post({
+            url: `${API_ENDPOINT}/oauth2/access_token`,
+            auth: { user: CLIENT_ID, pass: CLIENT_SECRET },
+            form: { grant_type: 'client_credentials' }
+        }, function(error, response, body) {
+            if (error) return reject(error);
+            access_Token = JSON.parse(body).access_token;
+            resolve();
+        });
+    });
+}
+
+async function main() {
+    await _ensureAccessToken();
+
+    if (work_Sheets.length > 1) {
+        console.warn("Found more than one sheet in the xlsx file.");
+        const sheet_Name = prompt("Please provide the sheet name that the Cards are in: ");
+        handle_SheetInformation(get_SheetInformation(sheet_Name));
+    } else {
+        handle_SheetInformation(work_Sheets[0]);
+    }
 }
 
 function get_SheetInformation(sheetName) {
@@ -43,10 +64,10 @@ function handle_SheetInformation(sheet) {
             console.error("The headers / top row has an empty column in position: ",i+1);
             return false;
         }
-        userValue = sheet.data[0][i].toLowerCase();
+        const userValue = sheet.data[0][i].toLowerCase();
         userMappings[userValue] = i;
     }
-    
+
     // Remove the headers from the sheet data array so we only get the data for the Cards.
     sheet.data.splice(0,1);
 
@@ -66,7 +87,7 @@ function handle_SheetInformation(sheet) {
 
 }
 async function post_CreateCards(card_Information, userMappings) {
-    /* 
+    /*
     card_Information[y] = row
     card_Information[y][x] = in row y column x
     */
@@ -94,11 +115,11 @@ async function post_CreateCards(card_Information, userMappings) {
             // If the Card should be blocked then set the attribute "is blocked" to 1 (true).
             Card["is blocked"] = 1;
         }
-        // Create the array for the checklist 
+        // Create the array for the checklist
         let Card_CheckList = [];
         if (Card["checklist"] != undefined) {
             Card_CheckList = Card["checklist"].split("##");
-        } 
+        }
 
         userMappings_keys.forEach(Key => {
             if (Card[Key] == undefined) {
@@ -132,9 +153,9 @@ async function post_CreateCards(card_Information, userMappings) {
 
 async function send_Card(Card) {
     return new Promise(Information => {
-        request.post("https://api.projectplace.com/1/projects/"+workspace_ID+"/cards/create-new", {
+        request.post(`${API_ENDPOINT}/1/projects/${workspace_ID}/cards/create-new`, {
         auth: {
-         "bearer": access_Token.toString(),
+         "bearer": access_Token,
          "Content-Type": "application/json",
         },
         json: Card,
@@ -149,3 +170,5 @@ async function send_Card(Card) {
      });
     });
 }
+
+main();
