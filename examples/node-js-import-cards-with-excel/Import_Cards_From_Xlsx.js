@@ -21,7 +21,19 @@ function _ensureAccessToken() {
             form: { grant_type: 'client_credentials' }
         }, function(error, response, body) {
             if (error) return reject(error);
-            access_Token = JSON.parse(body).access_token;
+            if (!response || response.statusCode < 200 || response.statusCode >= 300) {
+                return reject(new Error(`Token request failed with status ${response && response.statusCode}: ${body}`));
+            }
+            let parsed;
+            try {
+                parsed = JSON.parse(body);
+            } catch (e) {
+                return reject(new Error(`Token response was not valid JSON: ${body}`));
+            }
+            if (!parsed.access_token) {
+                return reject(new Error(`Token response did not contain an access_token: ${body}`));
+            }
+            access_Token = parsed.access_token;
             resolve();
         });
     });
