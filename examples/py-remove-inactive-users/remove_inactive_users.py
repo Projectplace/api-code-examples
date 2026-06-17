@@ -1,21 +1,39 @@
 import collections
 import datetime
 import requests
-import requests_oauthlib
+import requests.auth
 import argh
 
-APPLICATION_KEY = 'REDACTED'
-APPLICATION_SECRET = 'REDACTED'
-ACCESS_TOKEN_KEY = 'REDACTED'
-ACCESS_TOKEN_SECRET = 'REDACTED'
+CLIENT_ID = 'REDACTED'
+CLIENT_SECRET = 'REDACTED'
 API_ENDPOINT = 'https://api.projectplace.com'
 
-oauth1 = requests_oauthlib.OAuth1(
-    client_key=APPLICATION_KEY,
-    client_secret=APPLICATION_SECRET,
-    resource_owner_key=ACCESS_TOKEN_KEY,
-    resource_owner_secret=ACCESS_TOKEN_SECRET
-)
+access_token = None
+
+
+def _ensure_access_token():
+    """
+    We ask for a new access token on every script run - in normal circumstances you can hold on to an access
+    token for longer than that.
+
+    This function uses the client credentials flow which only works for robot accounts since it is intended for
+    application-to-application communication. So the client_id and client_secret needs to belong to a robot and the
+    resulting access token will also belong to the robot.
+    """
+    global access_token
+    access_token_response = requests.post(
+        f'{API_ENDPOINT}/oauth2/access_token',
+        data={
+            'grant_type': 'client_credentials',
+        },
+        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+    )
+    access_token_response.raise_for_status()
+    access_token = access_token_response.json()['access_token']
+
+
+def _get_auth_header():
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 def get_inactive_users(days):
@@ -44,7 +62,7 @@ def get_inactive_users(days):
             'limit': 40,
             'row_number': 0
         },
-        auth=oauth1).json()
+        headers=_get_auth_header()).json()
 
     return inactive_users
 
@@ -71,7 +89,7 @@ def verify_replace_with(replace_with_id, inactive_users):
         return False
 
     all_account_members = requests.get(
-        f'{API_ENDPOINT}/1/account/people', auth=oauth1
+        f'{API_ENDPOINT}/1/account/people', headers=_get_auth_header()
     ).json()
 
     all_account_member_ids = [int(u['id']) for u in all_account_members if u['account_role'] in (
@@ -133,7 +151,7 @@ def organise_owner_transfers(inactive_users):
         owner_record['is_external'] = user_to_remove['account_role'] == 'account_role_external'
         owned_artifacts = requests.get(
             f'{API_ENDPOINT}/1/account/people/{user_to_remove["userid"]}/owned-artifacts',
-            auth=oauth1
+            headers=_get_auth_header()
         ).json()
 
         # 1. Workspaces
@@ -166,7 +184,7 @@ def _remove_account_user(user_id):
                 }
             ]
         },
-        auth=oauth1
+        headers=_get_auth_header()
     )
     response.raise_for_status()
     try:
@@ -205,7 +223,7 @@ def _delete_account_user(user_id, ownerships=None, replace_with=None):
                 ownerships_payload
             ]
         },
-        auth=oauth1
+        headers=_get_auth_header()
     )
 
     response.raise_for_status()
@@ -269,6 +287,7 @@ def execute_removal(owner_transfers, replace_with):
 @argh.arg('replace-with', type=int,
           help='Specify the ID of a person who should take over the head admin roles of whoever gets deleted')
 def main(days: int, replace_with: int):
+    _ensure_access_token()
     inactive_users = get_inactive_users(days)
 
     if not inactive_users:

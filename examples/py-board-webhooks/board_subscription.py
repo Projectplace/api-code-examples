@@ -2,26 +2,44 @@ import json
 
 import argh
 import requests
-import requests_oauthlib
+import requests.auth
 
 
-APPLICATION_KEY = 'REDACTED'
-APPLICATION_SECRET = 'REDACTED'
-ACCESS_TOKEN_KEY = 'REDACTED'
-ACCESS_TOKEN_SECRET = 'REDACTED'
+CLIENT_ID = 'REDACTED'
+CLIENT_SECRET = 'REDACTED'
 API_ENDPOINT = 'https://api.projectplace.com'
 
-oauth1 = requests_oauthlib.OAuth1(
-    client_key=APPLICATION_KEY,
-    client_secret=APPLICATION_SECRET,
-    resource_owner_key=ACCESS_TOKEN_KEY,
-    resource_owner_secret=ACCESS_TOKEN_SECRET
-)
+access_token = None
+
+
+def _ensure_access_token():
+    """
+    We ask for a new access token on every script run - in normal circumstances you can hold on to an access
+    token for longer than that.
+
+    This function uses the client credentials flow which only works for robot accounts since it is intended for
+    application-to-application communication. So the client_id and client_secret needs to belong to a robot and the
+    resulting access token will also belong to the robot.
+    """
+    global access_token
+    access_token_response = requests.post(
+        f'{API_ENDPOINT}/oauth2/access_token',
+        data={
+            'grant_type': 'client_credentials',
+        },
+        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+    )
+    access_token_response.raise_for_status()
+    access_token = access_token_response.json()['access_token']
+
+
+def _get_auth_header():
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 def _board_is_accessible(board_id):
     r = requests.get(
-        f'{API_ENDPOINT}/1/boards/{board_id}', auth=oauth1
+        f'{API_ENDPOINT}/1/boards/{board_id}', headers=_get_auth_header()
     )
 
     if r.status_code == 200:
@@ -33,7 +51,7 @@ def _board_is_accessible(board_id):
 def _subscribe_to_board(board_id, project_id, webhook_url):
     existing_webhooks = requests.get(
         f'{API_ENDPOINT}/1/webhooks/list',
-        auth=oauth1
+        headers=_get_auth_header()
     ).json()
 
     for webhook in existing_webhooks:
@@ -46,7 +64,7 @@ def _subscribe_to_board(board_id, project_id, webhook_url):
                         'event_type': ['card_status_change'],
                         'webhook': webhook_url
                     },
-                    auth=oauth1
+                    headers=_get_auth_header()
                 )
             return webhook
 
@@ -59,7 +77,7 @@ def _subscribe_to_board(board_id, project_id, webhook_url):
             'project_id': project_id,
             'webhook': webhook_url
         },
-        auth=oauth1
+        headers=_get_auth_header()
     ).json()
 
 
@@ -72,14 +90,14 @@ def _unsubscribe_to_board(board_id):
     if subscription_to_delete:
         requests.delete(
             f'{API_ENDPOINT}/1/webhooks/{subscription_to_delete["id"]}',
-            auth=oauth1
+            headers=_get_auth_header()
         )
 
 
 def _report_subscription_status(board_id):
     r = requests.get(
         f'{API_ENDPOINT}/1/webhooks/list',
-        auth=oauth1
+        headers=_get_auth_header()
     )
 
     if r.status_code != 200:
@@ -99,9 +117,10 @@ def _report_subscription_status(board_id):
                                                   'invoked when the subscribed event happens')
 @argh.arg('-u', '--unsubscribe', default=False, help='Delete the subscription if it exists')
 def board_subscription(board_id, *, webhook_url='', unsubscribe=False):
+    _ensure_access_token()
     project_id = _board_is_accessible(board_id)
     if not project_id:
-        print(f'Board does not exist or is not accessible using {oauth1.client}')
+        print('Board does not exist or is not accessible with the current credentials')
         exit(1)
 
     if webhook_url:

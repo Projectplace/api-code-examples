@@ -2,22 +2,39 @@ import math
 import os.path
 import argh
 import requests
-import requests_oauthlib
+import requests.auth
 
 
-APPLICATION_KEY = 'REDACTED'
-APPLICATION_SECRET = 'REDACTED'
-ACCESS_TOKEN_KEY = 'REDACTED'
-ACCESS_TOKEN_SECRET = 'REDACTED'
+CLIENT_ID = 'REDACTED'
+CLIENT_SECRET = 'REDACTED'
 API_ENDPOINT = 'https://api.projectplace.com'
 
+access_token = None
 
-oauth1 = requests_oauthlib.OAuth1(
-    client_key=APPLICATION_KEY,
-    client_secret=APPLICATION_SECRET,
-    resource_owner_key=ACCESS_TOKEN_KEY,
-    resource_owner_secret=ACCESS_TOKEN_SECRET
-)
+
+def _ensure_access_token():
+    """
+    We ask for a new access token on every script run - in normal circumstances you can hold on to an access
+    token for longer than that.
+
+    This function uses the client credentials flow which only works for robot accounts since it is intended for
+    application-to-application communication. So the client_id and client_secret needs to belong to a robot and the
+    resulting access token will also belong to the robot.
+    """
+    global access_token
+    access_token_response = requests.post(
+        f'{API_ENDPOINT}/oauth2/access_token',
+        data={
+            'grant_type': 'client_credentials',
+        },
+        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+    )
+    access_token_response.raise_for_status()
+    access_token = access_token_response.json()['access_token']
+
+
+def _get_auth_header():
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 class ProjectToDownload:
@@ -54,7 +71,7 @@ def _fetch_archived_projects_info(limit=100, row_number=0):
     if row_number:
         request_body.update({'row_number': row_number})
 
-    r = requests.post(f'{API_ENDPOINT}/2/account/projects', json=request_body, auth=oauth1)
+    r = requests.post(f'{API_ENDPOINT}/2/account/projects', json=request_body, headers=_get_auth_header())
 
     response_json = r.json()
 
@@ -131,7 +148,7 @@ def _trigger_project_export(project_id: int):
               "include_plan_attachments": True, "include_boards": True, "include_card_attachments": True,
               "include_archived_boards": True, "include_conversations": True, "include_conversation_attachments": True,
               "include_issues_2": True, "include_issues_2_attachments": True},
-        auth=oauth1
+        headers=_get_auth_header()
     )
     response.raise_for_status()
     if response.status_code == 200:
@@ -164,7 +181,7 @@ def _await_export(project_id, export_id):
     while not export_done:
         time.sleep(5)
         export_result = requests.get(
-            f'{API_ENDPOINT}/1/projects/{project_id}/exports/{export_id}', auth=oauth1
+            f'{API_ENDPOINT}/1/projects/{project_id}/exports/{export_id}', headers=_get_auth_header()
         )
 
         if not export_result.status_code == 200:
@@ -186,7 +203,7 @@ def _download_export(project_id, download_name, download_uri, path=None):
     if path is not None:
         file_path = os.path.join(path, file_path)
 
-    with requests.get(download_uri, auth=oauth1, stream=True) as r:
+    with requests.get(download_uri, headers=_get_auth_header(), stream=True) as r:
         r.raise_for_status()
         with open(file_path, 'wb') as fp:
             for chunk in r.iter_content(chunk_size=2097152):  # 2 MB chunks should be fine
@@ -209,7 +226,7 @@ def _delete_archived_projects(archived_projects, path=None):
             continue
 
         r = requests.delete(
-            f'{API_ENDPOINT}/1/projects/{archived_project.id}', auth=oauth1
+            f'{API_ENDPOINT}/1/projects/{archived_project.id}', headers=_get_auth_header()
         )
         if r.status_code != 200:
             print(f'{n}/{total_count} Failed to delete {archived_project.id} - {archived_project.name}')
@@ -230,6 +247,7 @@ def download_archived_projects(*, purge_after_download=False, path=None):
     """
     This is the entry point of the script.
     """
+    _ensure_access_token()
     if path is not None:
         assert os.path.isdir(path) is True  # Abort if path is not a valid directory
 
